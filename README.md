@@ -14,6 +14,8 @@
 
 3: 使用SLS SDK需要安装protobuf和simplejson，具体见http://docs.aliyun.com/?spm=5176.383723.9.7.cMBsfX#/sls/sdk/python&quickstart
 
+4: ODPS 工具需要java 1.6以上
+
 
 ##代码组成
    1：ODPS的导数据工具dship： http://help.aliyun.com/knowledge_detail.htm?knowledgeId=5975631
