@@ -84,3 +84,6 @@
 
 ###一个例子
  python oss_tool.py  --to_odps --access_id=id --access_key=key --oss_host=oss.aliyuncs.com --log_prefix=access_log/bucket_name --log_store_bucket=bucket_name --start_time='2015-03-27'  --odps_project=my_odps_project_name --to_sls  --sls_host=cn-hangzhou.sls.aliyuncs.com   --sls_project=my_sls_project  --sls_logstore=oss_access_log --sls_quota=1
+
+## 联系
+  任何问题联系yunleisjtu+github@gmail.com
