@@ -37,6 +37,8 @@ class OdpsHelper:
         odpscmd=getscriptdir()+"/odps/dship config --tunnel-endpoint="+tunnel_endpoint+" --endpoint="+endpoint+"  --id="+access_id+" --key="+ access_key+" --project="+project
         self.common_cmd = " -e "+ endpoint+" -te "+tunnel_endpoint+" -i "+access_id+" -k "+access_key +" "
         os.system(odpscmd);
+        odpscmd='mkdir -p '+getscriptdir()+"/odps/conf"+';echo "access_id='+self.access_id+"\naccess_key="+self.access_key+"\nend_point="+self.endpoint+'\nproject_name='+self.project+'" > '+getscriptdir()+"/odps/conf/odps.conf";
+        os.system(odpscmd);
 
     def createTable(self):
         sql = "create table "+self.table+"(inttime bigint,ip string,time string,http_method string, url string ,status bigint,send_bytes  bigint,request_time bigint,referer string,user_agent string,oss_host string ,request_id string,aliyun_id string,operation string,bucket_name string,object string,size string,server_cost_time string,error_code string,bucket_owner_id string) partitioned by (filename string);"
@@ -52,7 +54,7 @@ class OdpsHelper:
                     f.write(",")
             f.write("\n");
         f.close();
-        createPartCmd = getscriptdir()+"/odps/bin/odps sql \"ALTER TABLE oss_access_log  ADD IF NOT EXISTS PARTITION (filename='"+filename+"')\""
+        createPartCmd = getscriptdir()+"/odps/bin/odps  sql \"ALTER TABLE oss_access_log  ADD IF NOT EXISTS PARTITION (filename='"+filename+"')\""
         os.system(createPartCmd)
         odpscmd=getscriptdir()+"/odps/dship upload "+self.common_cmd+tmpfileName+" "+self.project+"."+self.table+"/filename='"+filename+"'";
         os.system(odpscmd);
@@ -293,6 +295,8 @@ if __name__ == "__main__":
         odpsObj = OdpsHelper(option.odps_endpoint,option.odps_tunnel_endpoint,odps_access_id,odps_access_key,option.odps_project,option.odps_table);
         odpsObj.createTable();
     files = ossObj.ListFile(option.log_store_bucket,option.log_prefix,beginStr);
+    if len(files) == 0:
+        print "no access log file found in oss://"+option.log_store_bucket+"/"+option.log_prefix
     for fIndex in range(len(files)):
         print files[fIndex],
         logs = ossObj.GetFileContentAsLogs(option.log_store_bucket,files[fIndex])
