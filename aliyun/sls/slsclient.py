@@ -22,7 +22,7 @@ from aliyun.sls.gethistogramsresponse import GetHistogramsResponse
 
 CONNECTION_TIME_OUT = 20
 API_VERSION = '0.4.0'
-USER_AGENT = 'sls-python-sdk-v-0.4.1'
+USER_AGENT = 'yunlei-python-sdk-v-0.4.1'
 
 """
 SlsClient class is the main class in the SDK. It can be used to communicate with 
