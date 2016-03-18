@@ -9,7 +9,6 @@ from aliyun.sls.logitem import *
 from aliyun.sls.putlogsrequest import *
 import hashlib
 import os
-import MySQLdb;
 try:
     from oss.oss_api import *
 except:
@@ -72,14 +71,18 @@ class OssHelper:
         self.pattern.append(re.compile("([\d\.]+)\s+(\d+)\s+\S+\s+\[(\S+)\s+\+\d+\]\s+\"(\S+)\s+(\S+)\s+\S+\"\s+(\d+)\s+(\d+)\s+(\d+)\s+\"(\S+)\"\s+\"([^\"]+)\"\s+\"(\S+)\"\s+\"(\S+)\"\s+\"\S+\"\s+\"\S+\"\s+\"(\S+)\"\s+\"(\S+)\"\s+\"(\S+)\"\s+(\d+)\s+(\d+)\s+\"\S+\"\s+(\d+)\s+\"(\d+)\"\s\S+\s+\"\S+\"\s+\"(\S+)\""))
         self.keys.append((                   "ip",                    "time",           "http_method","url",   "status","send_bytes",  "request_time",  "referer",   "user_agent",  "oss_host","request_id", "aliyun_id",           "operation", "bucket",    "object","size","server_cost_time",           "error_code",   "bucket_owner_id"))
         self.keys.append(("ip","key1","time","http_method","url","status","key2","key3","referer","user_agent","oss_host","request_id","oss_method","bucket","object","size","key4","key5","key6","oss_server_name"))
-    def ListFile(self,bucket, prefix,beginStr):
+    def ListFile(self,bucket, prefix,beginStr,endStr):
         #列出bucket中所拥有的object
         marker = prefix+beginStr
         delimiter = ""
         maxkeys = "1000"
         headers = {}
         r = []
+        endMarker = None
+        if endStr is not None:
+            endMarker = prefix+endStr
         while True:
+            print prefix,marker
             res = self.oss.get_bucket(bucket, prefix, marker, delimiter, maxkeys, headers)
             object = ""
             if (res.status / 100) == 2:
@@ -89,6 +92,8 @@ class OssHelper:
                 if len(file_list) == 0:
                     break;
                 for i in file_list:
+                    if  endMarker is not None and i[0] >=endMarker:
+                        break
                     r.append(i[0])
                 marker = file_list[len(file_list) -1][0]
             else:
@@ -195,7 +200,8 @@ if __name__ == "__main__":
     parser.add_option("", "--sls_access_key", dest="sls_access_key", help="sls access key,if not specified ,whill use access_key")
     parser.add_option("", "--access_id", dest="access_id", help="access id,if not specified ,whill use access_id")
     parser.add_option("", "--access_key", dest="access_key", help="access key,if not specified ,whill use access_key")
-    parser.add_option("", "--start_time", dest = "start_time",help="start time to download access_log")
+    parser.add_option("", "--start_time", dest = "start_time",help="start time to download access_log,include startTime")
+    parser.add_option("", "--end_time", dest = "end_time",help="end time to download access_log,exclusive endTime")
     parser.add_option("", "--log_prefix", dest="log_prefix",help="if you store bucket1's access log in bucket2, and set prefix as prefix_path then the log path may like oss://${bucket2}/${prefix_path}${bucket1}_access_log_2014-12-30-13-00-00-0001, you should set --log_prefix=${prefix_path}${bucket1} and --log_store_bucket=${bucket2}")
     parser.add_option("", "--log_store_bucket",dest="log_store_bucket",help="if you store bucket1's access log in bucket2, and set prefix as prefix_path then the log path may like oss://${bucket2}/${prefix_path}${bucket1}_access_log_2014-12-30-13-00-00-0001, you should set --log_prefix=${prefix_path}${bucket1} and --log_store_bucket=${bucket2}")
     parser.add_option("","--to_sls" ,dest="send_log_to_sls",help=" if --to_sls is set in CLI ,log will send to sls",action="store_true")
@@ -224,9 +230,6 @@ if __name__ == "__main__":
         sls_access_id = option.sls_access_id
         sls_access_key = option.sls_access_key
 
-    if option.send_log_to_sls is None and option.send_log_to_mysql is None:
-        print "what do you want? send access log to sls or to mysql to all? please use --to_sls or  to specify. if you want to send to all,please set both flag"
-        exit(0)
     if oss_access_id is None :
         print "Oss AccessId is not set,use --access_id=${} or --oss_access_id]${}"
         exit(0)
@@ -242,25 +245,25 @@ if __name__ == "__main__":
     if option.log_store_bucket is None:
         print "--log_store_bucket must be set,it is the bucket name that store the log file "
         exit(0)
-    if option.send_log_to_sls is not None:
-        if option.sls_project is None :
-            print "you have choose to send data to sls, --sls_project must be set"
-            exit(0)
-        if option.sls_logstore is None:
-            print "you have choose to send data to sls, --sls_logstore must be set"
-            exit(0)
-        if option.sls_host is None :
-            print "you have choose to send data to sls, --sls_host must be set"
-            exit(0)
-        if sls_access_id is None:
-            print "you have choose to send data to sls, sls access id must be set, use --access_id or --sls_access_id"
-            exit(0)
-        if sls_access_key is None:
-            print "you have choose to send data to sls, sls access key must be set, use --access_key or --sls_access_key"
-            exit(0)
+    if option.sls_project is None :
+        print "you have choose to send data to sls, --sls_project must be set"
+        exit(0)
+    if option.sls_logstore is None:
+        print "you have choose to send data to sls, --sls_logstore must be set"
+        exit(0)
+    if option.sls_host is None :
+        print "you have choose to send data to sls, --sls_host must be set"
+        exit(0)
+    if sls_access_id is None:
+        print "you have choose to send data to sls, sls access id must be set, use --access_id or --sls_access_id"
+        exit(0)
+    if sls_access_key is None:
+        print "you have choose to send data to sls, sls access key must be set, use --access_key or --sls_access_key"
+        exit(0)
 
 
     if option.send_log_to_mysql is not None:
+        import MySQLdb;
         if option.db_host is None:
             print "you have choose send data to mysql ,db_host must be set,use --db_host=";
             exit(0);
@@ -280,21 +283,20 @@ if __name__ == "__main__":
     beginStr = option.start_time
     if beginStr is None:
         beginStr = ""
+    endStr = option.end_time
     ossObj = OssHelper(option.oss_host,oss_access_id,oss_access_key)
     slsObj = None
-    if option.send_log_to_sls is not None:
-        slsObj = SlsHelper(option.sls_host,sls_access_id,sls_access_key,option.sls_project,option.sls_logstore,option.sls_topic,option.sls_quota)
+    slsObj = SlsHelper(option.sls_host,sls_access_id,sls_access_key,option.sls_project,option.sls_logstore,option.sls_topic,option.sls_quota)
     if option.send_log_to_mysql is not None:
         mysqlObj =  MysqlHelper(option.db_host,option.db_user,option.db_password,option.db_database,option.db_table);
-    files = ossObj.ListFile(option.log_store_bucket,option.log_prefix,beginStr);
+    files = ossObj.ListFile(option.log_store_bucket,option.log_prefix,beginStr,endStr);
     if len(files) == 0:
         print "no access log file found in oss://"+option.log_store_bucket+"/"+option.log_prefix
     for fIndex in range(len(files)):
         print files[fIndex],
         logs = ossObj.GetFileContentAsLogs(option.log_store_bucket,files[fIndex])
-        if option.send_log_to_sls is not None:
-            print "----> sls ",option.sls_project,"(",option.sls_logstore,")",len(logs)," records"
-            slsObj.SendLogs(logs)
+        print "----> sls ",option.sls_project,"(",option.sls_logstore,")",len(logs)," records"
+        slsObj.SendLogs(logs)
         if option.send_log_to_mysql is not None:
             print "----> to mysql "
             mysqlObj.UpdateToMysql(logs);

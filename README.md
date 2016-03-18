@@ -1,6 +1,7 @@
-# oss_access_log_to_odps_sls
+#  OSS Access log导入阿里云日志服务做分析
 
 ##功能
+
 1：把OSS的access log 导入阿里云日志服务做查询。
 
 2：通过阿里云日志服务对接下游各种实时消费系统比如jstorm或者odps做统计分析。
@@ -34,15 +35,15 @@
 
    4: --log_store_bucket:access log保存的bucket名称
 
-   5: --log_prefix：日志文件完整路径去掉之后的时间，前边的字符串，也是你在logging配置中的日志前缀+日志所代表的bucket名称。
+   5: --log_prefix：日志文件完整路径去掉之后的时间，前边的字符串，也是你在logging配置中的日志前缀+日志所代表的bucket名称。例如，bucket1的访问日志导入存放在bucket2中，并且在osslogging设置中的前缀为access_log_dir/xxxxx ，那么--log_prefix=access_log_dir/xxxxxbucket1  --log_store_bucket=bucket2
 
    6: --start_time: 表示从哪一刻开始导数据，比如2015-03-27
+   
+   7: --end_time : 表示导入日志的截至日期，不包含该日期，比如2016-03-18
 
 
    sls相关参数
-
-   7：--to_sls  命令行中加入这个参数表示导数据到sls
-
+   
    8：--sls_host:和oss_host类似，但是表示sls的地址，比如杭州集群是cn-hangzhou.sls.aliyun.com
 
    9: --sls_project： sls的project名称，是你在sls申请的，类似于bucket。
@@ -52,6 +53,7 @@
 
 
 ### 可选参数：
+
    sls可选参数
 
    1: --sls_topic，表示导入到的topic名称，默认导入空的topic中
@@ -65,8 +67,8 @@
  
  ```
  python oss_tool.py  --access_id=id --access_key=key \
-    --oss_host=oss.aliyuncs.com --log_prefix=access_log/bucket_name --log_store_bucket=bucket_name --start_time='2015-03-27' \
-    --to_sls  --sls_host=cn-hangzhou.sls.aliyuncs.com   --sls_project=my_sls_project  --sls_logstore=oss_access_log --sls_quota=1
+    --oss_host=oss.aliyuncs.com --log_prefix=access_log_dir/xxxxxbucket1 --log_store_bucket=bucket2 --start_time='2015-03-27' --end_time='2016-03-18'\
+      --sls_host=cn-hangzhou.sls.aliyuncs.com   --sls_project=my_sls_project  --sls_logstore=oss_access_log --sls_quota=1
  ```
 
 ## 联系
